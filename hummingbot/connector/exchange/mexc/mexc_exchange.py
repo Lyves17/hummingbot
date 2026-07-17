@@ -107,11 +107,16 @@ class MexcExchange(ExchangePyBase):
     def is_trading_required(self) -> bool:
         return self._trading_required
 
+    async def _api_request(self, *args, sign_if_possible=False, **kwargs):
+        if sign_if_possible and self._auth is not None:
+            kwargs["is_auth_required"] = True
+        return await super()._api_request(*args, **kwargs)
+
     def supported_order_types(self):
         return [OrderType.LIMIT, OrderType.LIMIT_MAKER, OrderType.MARKET]
 
     async def get_all_pairs_prices(self) -> List[Dict[str, str]]:
-        pairs_prices = await self._api_get(path_url=CONSTANTS.TICKER_BOOK_PATH_URL, headers={"Content-Type": "application/json"})
+        pairs_prices = await self._api_get(path_url=CONSTANTS.TICKER_BOOK_PATH_URL, headers={"Content-Type": "application/json"}, sign_if_possible=True)
         return pairs_prices
 
     def _is_request_exception_related_to_time_synchronizer(self, request_exception: Exception):
@@ -553,9 +558,9 @@ class MexcExchange(ExchangePyBase):
         await self._api_get(path_url=self.check_network_request_path, headers={"Content-Type": "application/json"})
 
     async def _make_trading_rules_request(self) -> Any:
-        exchange_info = await self._api_get(path_url=self.trading_rules_request_path, headers={"Content-Type": "application/json"})
+        exchange_info = await self._api_get(path_url=self.trading_rules_request_path, headers={"Content-Type": "application/json"}, sign_if_possible=True)
         return exchange_info
 
     async def _make_trading_pairs_request(self) -> Any:
-        exchange_info = await self._api_get(path_url=self.trading_pairs_request_path, headers={"Content-Type": "application/json"})
+        exchange_info = await self._api_get(path_url=self.trading_pairs_request_path, headers={"Content-Type": "application/json"}, sign_if_possible=True)
         return exchange_info
